@@ -70,7 +70,7 @@ The following configuration options can be specified in NxtMint.conf.  This file
 	Specifies the NRS API port and defaults to 27876.    
     
   - useSSL=boolean      
-    Specify 'true' to use HTTPS or 'false' to use HTTP to connect to the NRS node.  The default is 'false'.
+    Specify 'true' to use HTTPS or 'false' to use HTTP to connect to the NRS node.  HTTP is always used for a localhost connection.  The default is 'false'.
     
   - allowNameMismatch=boolean       
     Specify 'true' to allow an HTTPS connection or 'false' to reject an HTTPS connection if the host name does not match the SSL certificate name.  The default is 'false'.
@@ -82,10 +82,10 @@ The following configuration options can be specified in NxtMint.conf.  This file
     Specifies the account secret phrase and must be specified.  The secret phrase will not be sent to the NRS server.   
     
   - chain=name    
-    Specifies the Nxt2 child chain which will be used to pay the transaction fees.   
+    Specifies the Nxt2 child chain for the currency and defaults to IGNIS.  The currency must have been issued for this chain and the minting transaction fees will be paid with this chain.   
 
   - fee=amount    
-    Specifies the fee you want to pay for each minting transaction.  Each minting transaction costs 1 ARDR, so the fee must be large enough to result in at least 1 ARDR using the best available bundler exchange rate.  
+    Specifies the fee you want to pay for each minting transaction.  Each minting transaction costs 1 ARDR, so the fee must be large enough to result in at least 1 ARDR using the best available bundler exchange rate.  The default fee is 1.00 if no fee is specified.  
     
   - currency=code      
     Specifies the code for the currency to be minted.       

@@ -9,6 +9,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <json.version>1.0.0</json.version>
         <slf4j.version>1.7.21</slf4j.version>
         <bcprov.version>1.55</bcprov.version>
         <jocl.version>0.1.9</jocl.version>
@@ -97,6 +98,12 @@
         </plugins>
     </build>
     <dependencies>
+        <dependency>
+            <groupId>org.ScripterRon</groupId>
+            <artifactId>JSON</artifactId>
+            <version>${json.version}</version>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
