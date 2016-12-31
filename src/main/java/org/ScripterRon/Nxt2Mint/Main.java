@@ -111,6 +111,9 @@ public class Main {
     /** Nxt chains */
     public static final Map<Integer, String> chains = new HashMap<>();
 
+    /** Nxt transaction types */
+    public static final Map<Integer, Map<Integer, String>> transactionTypes = new HashMap<>();
+
     /** Nxt node host name */
     public static String nxtHost = "localhost";
 
@@ -158,6 +161,9 @@ public class Main {
 
     /** Minting account identifier */
     public static long accountId;
+
+    /** Minting account public key */
+    public static byte[] publicKey;
 
     /** Child chain identifier */
     public static int chainId;
@@ -233,7 +239,8 @@ public class Main {
                 throw new IllegalArgumentException("Currency code is not valid");
             if (gpuIntensity > 1048576)
                 throw new IllegalArgumentException("Maximum gpuIntensity is 1,048,576");
-            accountId = Utils.getAccountId(Crypto.getPublicKey(secretPhrase));
+            publicKey = Crypto.getPublicKey(secretPhrase);
+            accountId = Utils.getAccountId(publicKey);
             //
             // Get the application build properties
             //
@@ -288,6 +295,7 @@ public class Main {
     /**
      * Start the minter
      */
+    @SuppressWarnings("unchecked")
     private static void startup() {
         try {
             //
@@ -308,6 +316,22 @@ public class Main {
             });
             if (chainId == 0)
                 throw new IllegalArgumentException("'" + chainName + "' is not a valid chain");
+            //
+            // Get the transaction types
+            //
+            Set<Map.Entry<String, Object>> typeSet = response.getObject("transactionTypes").entrySet();
+            typeSet.forEach(entry -> {
+                int type = Integer.valueOf(entry.getKey());
+                Map<String, Object> subtypes = (Map<String, Object>)((Map<String, Object>)entry.getValue()).get("subtypes");
+                Set<Map.Entry<String, Object>> subtypeSet = subtypes.entrySet();
+                Map<Integer, String> transactionSubtypes = new HashMap<>();
+                subtypeSet.forEach(subentry -> {
+                    int subtype = Integer.valueOf(subentry.getKey());
+                    String name = (String)((Map<String, Object>)subentry.getValue()).get("name");
+                    transactionSubtypes.put(subtype, name);
+                });
+                transactionTypes.put(type, transactionSubtypes);
+            });
             //
             // Ensure the account is funded
             //

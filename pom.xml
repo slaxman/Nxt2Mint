@@ -45,6 +45,9 @@
                         <target>${maven.compiler.target}</target>
                         <showDeprecation>true</showDeprecation>
                         <showWarnings>true</showWarnings>
+                        <compilerArgs>
+                            <arg>-Xlint:unchecked</arg>
+                        </compilerArgs>
                     </configuration>
                 </plugin>
             <!-- Make the jar file executable -->

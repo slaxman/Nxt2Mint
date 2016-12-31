@@ -21,12 +21,6 @@ import static org.ScripterRon.Nxt2Mint.Main.log;
  */
 public abstract class HashFunction {
 
-    /** JNI library available */
-    protected static boolean jniAvailable = false;
-
-    /** JNI load attempted */
-    private static boolean jniAttempted = false;
-
     /** Hash count */
     protected int hashCount;
 
@@ -40,40 +34,7 @@ public abstract class HashFunction {
      * Private constructor for use by subclasses
      */
     protected HashFunction() {
-        //
-        // Load the JNI library
-        //
-        if (!jniAttempted) {
-            jniAttempted = true;
-            String libraryName = null;
-            String osName = System.getProperty("os.name");
-            if (osName != null) {
-                osName = osName.toLowerCase();
-                String dataModel = System.getProperty("sun.arch.data.model");
-                if (dataModel == null)
-                    dataModel = "32";
-                if (osName.contains("windows") || osName.contains("linux")) {
-                    if (dataModel.equals("64"))
-                        libraryName = "NxtMint_x86_64";
-                    else
-                        libraryName = "NxtMint_x86";
-                }
-            }
-            if (libraryName != null) {
-                try {
-                    System.loadLibrary(libraryName);
-                    jniAvailable = true;
-                    log.info(String.format("JNI library %s loaded - using native CPU hash routines",
-                                           libraryName));
-                } catch (UnsatisfiedLinkError exc) {
-                    log.info(String.format("Native library %s is not available - using Java CPU hash routines",
-                                           libraryName));
-                } catch (Exception exc) {
-                    log.error(String.format("Unable to load native library %s - using Java CPU hash routines",
-                                            libraryName), exc);
-                }
-            }
-        }
+
     }
 
     /**

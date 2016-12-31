@@ -75,6 +75,31 @@ public class Request {
     }
 
     /**
+     * Create a mint transaction and return the unsigned transaction
+     *
+     * @param       currencyId              Currency identifier
+     * @param       chainId                 Chain identifier
+     * @param       nonce                   Minting nonce
+     * @param       units                   Units minted
+     * @param       counter                 Minting counter
+     * @param       fee                     Transaction fee
+     * @param       publicKey               Sender public key
+     * @return                              Transaction
+     * @throws      IOException             Unable to issue Nxt API request
+     */
+    public static Response currencyMint(long currencyId, int chainId, long nonce, long units,
+                                            long counter, long fee, byte[] publicKey)
+                                            throws IOException {
+        return issueRequest("currencyMint",
+                String.format("currency=%s&chain=%s&nonce=%d&units=%d&counter=%d&"
+                                + "feeNQT=%s&publicKey=%s&deadline=30&broadcast=false",
+                        Utils.idToString(currencyId), Main.chains.get(chainId),
+                        nonce, units, counter, Long.toUnsignedString(fee),
+                        Utils.toHexString(publicKey)),
+                DEFAULT_READ_TIMEOUT);
+    }
+
+    /**
      * Get the account balance
      *
      * @param       accountId               Account identifier
@@ -87,6 +112,16 @@ public class Request {
                 String.format("account=%s&chain=%s",
                         Utils.idToString(accountId), Main.chains.get(chainId)),
                 DEFAULT_READ_TIMEOUT);
+    }
+
+    /**
+     * Get the blockchain status
+     *
+     * @return                              Blockchain status
+     * @throws      IOException             Unable to issue Nxt API request
+     */
+    public static Response getBlockchainStatus() throws IOException {
+        return issueRequest("getBlockchainStatus", null, DEFAULT_READ_TIMEOUT);
     }
 
     /**
@@ -130,27 +165,17 @@ public class Request {
     }
 
     /**
-     * Create a mint transaction and return the unsigned transaction
+     * Get the unconfirmed transactions for an account
      *
-     * @param       currencyId              Currency identifier
      * @param       chainId                 Chain identifier
-     * @param       nonce                   Minting nonce
-     * @param       units                   Units minted
-     * @param       counter                 Minting counter
-     * @param       fee                     Transaction fee
-     * @param       publicKey               Sender public key
-     * @return                              Transaction
+     * @param       accountId               Account identifier
+     * @return                              Target response
      * @throws      IOException             Unable to issue Nxt API request
      */
-    public static Response currencyMint(long currencyId, int chainId, long nonce, long units,
-                                            long counter, long fee, byte[] publicKey)
-                                            throws IOException {
-        return issueRequest("currencyMint",
-                String.format("currency=%s&chain=%s&nonce=%d&units=%d&counter=%d&"
-                                + "feeNQT=%s&publicKey=%s&deadline=30&broadcast=false",
-                        Utils.idToString(currencyId), Main.chains.get(chainId),
-                        nonce, units, counter, Long.toUnsignedString(fee),
-                        Utils.toHexString(publicKey)),
+    public static Response getUnconfirmedTransactions(int chainId, long accountId) throws IOException {
+        return issueRequest("getUnconfirmedTransactions",
+                String.format("chain=%s&account=%s",
+                        Main.chains.get(chainId), Utils.idToString(accountId)),
                 DEFAULT_READ_TIMEOUT);
     }
 
@@ -227,7 +252,7 @@ public class Request {
                     String errorText = String.format("Error %d returned for %s request: %s",
                                                      errorCode, requestType, errorDesc);
                     Main.log.error(errorText);
-                    throw new IOException(errorText);
+                    throw new NxtException(errorText, errorCode.intValue(), errorDesc);
                 }
             }
             if (Main.log.isDebugEnabled())
