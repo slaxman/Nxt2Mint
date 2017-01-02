@@ -3,7 +3,7 @@ Nxt2Mint
 
 Nxt2Mint mints currencies defined by the Nxt2 Monetary System.  A single currency can be minted as specified by the NxtMint configuration file.  The minting algorithm is executed using one or more CPU threads or GPU work items.  Newly-minted coins will be added to the account specified in the configuration file.     
 
-The NRS node used to create the mint transactions must accept API connections.  This is done by specifying nxt.apiServerPort, nxt.apiServerHost and nxt.allowedBotHosts in nxt.properties.  The account secret phrase is not sent to the Nxt server since the mint transactions are created and signed locally.  
+The NRS node used to create the mint transactions must accept API connections.  This is done by specifying nxt.apiServerPort, nxt.apiServerHost and nxt.allowedBotHosts in nxt.properties.  The account secret phrase is not sent to the Nxt server since the mint transactions are signed locally.  
 
 Nxt2Mint requires the Java 8 runtime since it uses language features that are not available in earlier versions of Java.   
 
@@ -24,7 +24,7 @@ Perform the following steps to install Nxt2Mint on your system:
   - Install the Java 8 runtime if you do not already have it installed.     
   - Download the latest version from https://github.com/ScripterRon/Nxt2Mint/releases.       
   - Extract the files from the archive in a directory of your choice.   
-  - Copy Nxt2Mint.conf to the application data directory.  Edit the file to specify your desired NRS server, the child coin chain used to pay transaction fees, your secret passphrase (the passphrase will not be sent to the server) and the desired number of CPU threads and/or GPU intensity.  If you are using the GPU, start with gpuIntensity=1 and gpuDevice=0,32,32 and then increase the values until either there is no further improvement in the hash rate or your graphics card begins to overheat.  Your device driver will fail to load the OpenCL kernel if you exceed the available resources (this is especially true for Scrypt since it has a large memory requirement).  The global size (work group size * work group count) determines how much storage is required.    
+  - Copy Nxt2Mint.conf to the application data directory.  Edit the file to specify your desired NRS server, the child chain for the currency, your secret passphrase (the passphrase will not be sent to the server) and the desired number of CPU threads and/or GPU intensity.  If you are using the GPU, start with gpuIntensity=1 and gpuDevice=0,32,32 and then increase the values until either there is no further improvement in the hash rate or your graphics card begins to overheat.  Your device driver will fail to load the OpenCL kernel if you exceed the available resources (this is especially true for Scrypt since it has a large memory requirement).  The global size (work group size * work group count) determines how much storage is required.    
   - Copy logging.properties to the application data directory.  Edit the log file name if you want to place it somewhere other than the temporary directory for your userid.     
   - Install OpenCL if you want to use the GPU for mining.  The OpenCL runtime library must be in PATH (Windows) or LD_LIBRARY_PATH (Linux).
   - Edit the mint.sh (Linux/Macintosh) or mint.bat (Windows) to fit your needs. 
@@ -38,7 +38,6 @@ You can build Nxt2Mint from the source code if you do not want to use the packag
 Here are the steps for a manual build.  You will need to install Maven 3 and Java SE Development Kit 8 if you don't already have them.
 
   - Create the executable: mvn clean package    
-  - [Optional] Create the documentation: mvn javadoc:javadoc    
   - [Optional] Copy target/Nxt2Mint-v.r.m.jar and lib/* to wherever you want to store the executables.    
 
 
@@ -67,7 +66,7 @@ The following configuration options can be specified in NxtMint.conf.  This file
     Specifies the NRS host name and defaults to 'localhost'		
 	
   - apiPort=port		
-	Specifies the NRS API port and defaults to 27876.    
+	Specifies the NRS API port and defaults to 27876.  Use 26876 for testnet.    
     
   - useSSL=boolean      
     Specify 'true' to use HTTPS or 'false' to use HTTP to connect to the NRS node.  HTTP is always used for a localhost connection.  The default is 'false'.
@@ -88,7 +87,7 @@ The following configuration options can be specified in NxtMint.conf.  This file
     Specifies the fee you want to pay for each minting transaction.  Each minting transaction costs 1 ARDR, so the fee must be large enough to result in at least 1 ARDR using the best available bundler exchange rate.  The default fee is 1.00 if no fee is specified.  
     
   - currency=code      
-    Specifies the code for the currency to be minted.       
+    Specifies the code for the currency to be minted.  The currency must be defined for the specified chain.       
 
   - units=count     
     Specifies the number of units to generate for each hash round and defaults to 1.  The hash difficulty increases as the number of units increases but the transaction fee is the same no matter how many units are generated.  Thus you want to increase units as much as possible to reduce the cost of minting the currency but don't set it so high that you don't mint anything during a session.  The count can be specified as an integer value or as a decimal value with a maximum number of digits following the decimal point as defined for the currency.        
@@ -109,4 +108,3 @@ The following configuration options can be specified in NxtMint.conf.  This file
   - enableGUI=true|false      
     Specifies whether or not to enable the GUI and defaults to true.  Disabling the GUI allows NxtMint to run in headless environments such as a disconnected service.      
 	
-
