@@ -54,9 +54,6 @@ public class Main {
     /** Logger instance */
     public static final Logger log = LoggerFactory.getLogger("org.ScripterRon.Nxt2Mint");
 
-    /** NQT adjustment */
-    public static final long NQT_ADJUST = 100000000L;
-
     /** File separator */
     public static String fileSeparator;
 
@@ -109,7 +106,7 @@ public class Main {
     public static long epochBeginning;
 
     /** Nxt chains */
-    public static final Map<Integer, String> chains = new HashMap<>();
+    public static final Map<Integer, Chain> chains = new HashMap<>();
 
     /** Nxt transaction types */
     public static final Map<Integer, Map<Integer, String>> transactionTypes = new HashMap<>();
@@ -165,14 +162,14 @@ public class Main {
     /** Minting account public key */
     public static byte[] publicKey;
 
-    /** Child chain identifier */
-    public static int chainId;
+    /** Child chain */
+    public static Chain childChain;
 
-    /** Child chain name */
+    /** Child chain name (default to IGNIS) */
     public static String chainName = "IGNIS";
 
-    /** Transaction fee */
-    public static long fee = 1 * NQT_ADJUST;
+    /** Transaction fee (default to 1.0) */
+    public static long fee = 100000000L;
 
     /** Minting units expressed as a whole number with an implied decimal point */
     public static long mintingUnits;
@@ -306,16 +303,19 @@ public class Main {
             //
             // Get the chains
             //
-            Set<Map.Entry<String, Object>> chainSet = response.getObject("chains").entrySet();
-            chainSet.forEach(entry -> {
-                int id = ((Long)entry.getValue()).intValue();
-                String name = entry.getKey();
-                chains.put(id, name);
-                if (chainName.equals(name))
-                    chainId = id;
+            response.getObject("chainProperties").values().forEach(entry -> {
+                Response chainProperties = new Response((Map<String, Object>)entry);
+                Chain chain = new Chain(chainProperties.getString("name"),
+                                        chainProperties.getInt("id"),
+                                        chainProperties.getInt("decimals"));
+                chains.put(chain.getId(), chain);
+                if (chain.getName().equals(chainName))
+                    childChain = chain;
             });
-            if (chainId == 0)
+            if (childChain == null)
                 throw new IllegalArgumentException("'" + chainName + "' is not a valid chain");
+            if (childChain.getDecimals() != 8)
+                fee = new BigDecimal(fee).movePointLeft(8 - childChain.getDecimals()).longValue();
             //
             // Get the transaction types
             //
@@ -335,7 +335,7 @@ public class Main {
             //
             // Ensure the account is funded
             //
-            response = Request.getBalance(accountId, chainId);
+            response = Request.getBalance(accountId, childChain.getId());
             long balance = response.getLong("balanceNQT");
             if (balance < fee)
                 throw new IllegalArgumentException(
@@ -344,7 +344,7 @@ public class Main {
             //
             // Get the currency definition
             //
-            response = Request.getCurrency(currencyCode, chainId);
+            response = Request.getCurrency(currencyCode, childChain.getId());
             currencyId = response.getId("currency");
             currencyDecimals = response.getInt("decimals");
             long maxSupply = response.getLong("maxSupply");

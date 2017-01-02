@@ -40,4 +40,22 @@ public class NxtException extends IOException {
         this.errorCode = errorCode;
         this.errorDescription = errorDescription;
     }
+
+    /**
+     * Return the Nxt error code
+     *
+     * @return                      Nxt error code
+     */
+    public int getErrorCode() {
+        return errorCode;
+    }
+
+    /**
+     * Return the Nxt error description
+     *
+     * @return                      Nxt error description
+     */
+    public String getErrorDescription() {
+        return errorDescription;
+    }
 }

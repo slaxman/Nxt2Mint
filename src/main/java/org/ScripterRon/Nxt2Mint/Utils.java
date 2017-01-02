@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.MathContext;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -95,68 +96,71 @@ public class Utils {
     }
 
     /**
-     * Convert from NQT to a decimal string (1 NQT = 0.00000001 NXT)
-     * We will keep at least 4 decimal places in the result.
+     * Convert from NQT to a decimal string.
+     * We will keep at least 4 decimal places in the result unless the coin has
+     * fewer than 4 decimal places.
      *
      * @param       value           Value to be converted
+     * @param       decimals        Number of decimal places for the coin
      * @return                      A formatted decimal string
      */
-    public static String nqtToString(long value) {
+    public static String nqtToString(long value, int decimals) {
+        return nqtToString(new BigDecimal(value, MathContext.DECIMAL128).movePointLeft(decimals));
+    }
+
+    /**
+     * Convert a decimal value to a decimal string.
+     * We will keep at least 4 decimal places in the result unless the coin has
+     * fewer than 4 decimal places.
+     *
+     * @param       amount          Decimal amount
+     * @return                      A formatted decimal string
+     */
+    public static String nqtToString(BigDecimal amount) {
         //
-        // Format the amount
+        // Get the amount as a formatted string with the number of decimal
+        // places determined by the scale
         //
-        long bvalue = value;
-        boolean negative = (bvalue < 0);
-        if (negative)
-            bvalue = -bvalue;
+        String valueString = amount.toPlainString();
         //
-        // Get the amount as a formatted string with 8 decimal places
+        // Drop trailing zeros beyond 4 decimal places
         //
-        String valueString = String.format("%09d", bvalue);
-        int decimalPoint = valueString.length() - 8;
-        //
-        // Drop tailing zeros beyond 4 decimal places
-        //
+        int decimalPoint = valueString.indexOf('.');
         int toDelete = 0;
-        for (int i=valueString.length()-1; i>decimalPoint+3; i--) {
-            if (valueString.charAt(i) != '0')
-                break;
-            toDelete++;
+        if (amount.scale() > 4) {
+            for (int i=valueString.length()-1; i>decimalPoint+4; i--) {
+                if (valueString.charAt(i) != '0')
+                    break;
+                toDelete++;
+            }
         }
-        //
-        // Create the formatted decimal string
-        //
         StringBuilder formatted = new StringBuilder(valueString.substring(0, valueString.length()-toDelete));
-        formatted.insert(decimalPoint, '.');
         //
         // Insert commas as needed
         //
         int index = decimalPoint;
-        while (index > 3) {
+        int start = (amount.signum() >= 0 ? 0 : 1);
+        while (index > start+3) {
             index -= 3;
             formatted.insert(index, ',');
         }
-        //
-        // Add the sign if the value is negative
-        //
-        if (negative)
-            formatted.insert(0, '-');
         return formatted.toString();
     }
 
     /**
-     * Convert a decimal string to NQT (1 NQT = 0.00000001 NXT)
+     * Convert a decimal string to NQT
      *
      * @param       value           String to be converted
+     * @param       decimals        Number of decimal places for coin
      * @return                      Amount expressed in NQT
      */
-    public static long stringToNQT(String value) throws NumberFormatException {
+    public static long stringToNQT(String value, int decimals) throws NumberFormatException {
         if (value == null)
             throw new IllegalArgumentException("No string value provided");
         if (value.isEmpty())
             return 0;
-        BigDecimal decValue = new BigDecimal(value);
-        return decValue.scaleByPowerOfTen(8).longValue();
+        BigDecimal decValue = new BigDecimal(value, MathContext.DECIMAL128);
+        return decValue.movePointRight(decimals).longValue();
     }
 
     /**

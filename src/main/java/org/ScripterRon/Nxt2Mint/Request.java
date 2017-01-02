@@ -90,7 +90,7 @@ public class Request {
         return issueRequest("currencyMint",
                 String.format("currency=%s&chain=%s&nonce=%d&units=%d&counter=%d&"
                                 + "feeNQT=%s&publicKey=%s&deadline=30&broadcast=false",
-                        Utils.idToString(currencyId), Main.chains.get(chainId),
+                        Utils.idToString(currencyId), Main.chains.get(chainId).getName(),
                         nonce, units, counter, Long.toUnsignedString(fee),
                         Utils.toHexString(publicKey)),
                 DEFAULT_READ_TIMEOUT);
@@ -107,7 +107,7 @@ public class Request {
     public static Response getBalance(long accountId, int chainId) throws IOException {
         return issueRequest("getBalance",
                 String.format("account=%s&chain=%s",
-                        Utils.idToString(accountId), Main.chains.get(chainId)),
+                        Utils.idToString(accountId), Main.chains.get(chainId).getName()),
                 DEFAULT_READ_TIMEOUT);
     }
 
@@ -141,7 +141,7 @@ public class Request {
      */
     public static Response getCurrency(String code, int chainId) throws IOException {
         return issueRequest("getCurrency",
-                String.format("code=%s&chain=%s", code, Main.chains.get(chainId)),
+                String.format("code=%s&chain=%s", code, Main.chains.get(chainId).getName()),
                 DEFAULT_READ_TIMEOUT);
     }
 
@@ -172,7 +172,7 @@ public class Request {
     public static Response getUnconfirmedTransactions(int chainId, long accountId) throws IOException {
         return issueRequest("getUnconfirmedTransactions",
                 String.format("chain=%s&account=%s",
-                        Main.chains.get(chainId), Utils.idToString(accountId)),
+                        Main.chains.get(chainId).getName(), Utils.idToString(accountId)),
                 DEFAULT_READ_TIMEOUT);
     }
 

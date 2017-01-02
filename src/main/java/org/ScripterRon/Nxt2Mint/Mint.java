@@ -69,7 +69,7 @@ public class Mint {
         //
         counter = Main.mintingTarget.getCounter();
         try {
-            response = Request.getUnconfirmedTransactions(Main.chainId, Main.accountId);
+            response = Request.getUnconfirmedTransactions(Main.childChain.getId(), Main.accountId);
             if (!response.getObjectList("unconfirmedTransactions").isEmpty())
                 counter++;
         } catch (IOException exc) {
@@ -146,10 +146,10 @@ public class Mint {
                         int height = response.getInt("numberOfBlocks") - 1;
                         if (height > submitHeight) {
                             submitHeight = height;
-                            response = Request.getUnconfirmedTransactions(Main.chainId, Main.accountId);
+                            response = Request.getUnconfirmedTransactions(Main.childChain.getId(), Main.accountId);
                             if (response.getObjectList("unconfirmedTransactions").isEmpty()) {
                                 Solution solution = pending.get(0);
-                                response = Request.currencyMint(Main.currencyId, Main.chainId,
+                                response = Request.currencyMint(Main.currencyId, Main.childChain.getId(),
                                         solution.getNonce(), Main.mintingUnits, solution.getCounter(),
                                         Main.fee, Main.publicKey);
                                 byte[] txBytes = response.getHexString("unsignedTransactionBytes");
