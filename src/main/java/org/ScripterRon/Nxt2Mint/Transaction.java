@@ -92,22 +92,22 @@ public class Transaction {
      * @throws  NumberFormatException   Invalid numeric value
      */
     public Transaction(Response response) throws NumberFormatException {
-        this.version = response.getByte("version");
-        this.id = response.getLong("transaction");
-        this.fullHash = Utils.parseHexString(response.getString("fullHash"));
-        this.amount = response.getLong("amountNQT");
-        this.fee = response.getLong("feeNQT");
-        this.timestamp = new Date((response.getLong("timestamp")) * 1000L + Main.epochBeginning);
-        this.senderId = response.getLong("sender");
-        this.recipientId = response.getLong("recipient");
-        this.chainId = response.getInt("chain");
+        version = response.getByte("version");
+        fullHash = Utils.parseHexString(response.getString("fullHash"));
+        id = Utils.fullHashToId(fullHash);
+        amount = response.getLong("amountNQT");
+        fee = response.getLong("feeNQT");
+        timestamp = new Date((response.getLong("timestamp")) * 1000L + Main.epochBeginning);
+        senderId = response.getLong("sender");
+        recipientId = response.getLong("recipient");
+        chainId = response.getInt("chain");
         int txHeight = response.getInt("height");
         if (txHeight == 0 || txHeight == Integer.MAX_VALUE) {
-            this.height = 0;
-            this.blockId = 0;
+            height = 0;
+            blockId = 0;
         } else {
-            this.height = txHeight;
-            this.blockId = response.getLong("block");
+            height = txHeight;
+            blockId = response.getLong("block");
         }
         //
         // Get the transaction type

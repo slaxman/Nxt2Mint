@@ -165,7 +165,7 @@ public class Mint {
                                 byte[] signature = Crypto.sign(txBytes, Main.secretPhrase);
                                 System.arraycopy(signature, 0, txBytes, Transaction.SIGNATURE_OFFSET, 64);
                                 response = Request.broadcastTransaction(txBytes);
-                                solution.setTxId(response.getId("transaction"));
+                                solution.setTxId(Utils.fullHashToId(response.getHexString("fullHash")));
                                 if (Main.mainWindow != null)
                                     Main.mainWindow.solutionFound(solution);
                                 log.info(String.format("Solution for counter %d submitted", solution.getCounter()));
