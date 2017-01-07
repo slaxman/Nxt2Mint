@@ -9,6 +9,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <nxt2api.version>1.0.0</nxt2api.version>
         <json.version>1.0.0</json.version>
         <slf4j.version>1.7.21</slf4j.version>
         <bcprov.version>1.55</bcprov.version>
@@ -101,6 +102,12 @@
         </plugins>
     </build>
     <dependencies>
+        <dependency>
+            <groupId>org.ScripterRon</groupId>
+            <artifactId>Nxt2API</artifactId>
+            <version>${nxt2api.version}</version>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>org.ScripterRon</groupId>
             <artifactId>JSON</artifactId>

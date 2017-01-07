@@ -16,6 +16,13 @@
 package org.ScripterRon.Nxt2Mint;
 import static org.ScripterRon.Nxt2Mint.Main.log;
 
+import org.ScripterRon.Nxt2API.Attachment;
+import org.ScripterRon.Nxt2API.Nxt;
+import org.ScripterRon.Nxt2API.NxtException;
+import org.ScripterRon.Nxt2API.Response;
+import org.ScripterRon.Nxt2API.Transaction;
+import org.ScripterRon.Nxt2API.Utils;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -69,7 +76,7 @@ public class Mint {
         //
         counter = Main.mintingTarget.getCounter();
         try {
-            response = Request.getUnconfirmedTransactions(Main.childChain.getId(), Main.accountId);
+            response = Nxt.getUnconfirmedTransactions(Main.accountId, Main.childChain);
             if (!response.getObjectList("unconfirmedTransactions").isEmpty())
                 counter++;
         } catch (IOException exc) {
@@ -120,7 +127,7 @@ public class Mint {
                 //
                 if (!workDispatched) {
                     try {
-                        response = Request.getMintingTarget(Main.currencyId, Main.accountId, Main.mintingUnits);
+                        response = Nxt.getMintingTarget(Main.currencyId, Main.accountId, Main.mintingUnits);
                         mintingTarget = new MintingTarget(response);
                         mintingTarget.setCounter(counter);
                         counter++;
@@ -142,29 +149,27 @@ public class Mint {
                 if (!pending.isEmpty()) {
                     boolean submitted = false;
                     try {
-                        response = Request.getBlockchainStatus();
+                        response = Nxt.getBlockchainStatus();
                         int height = response.getInt("numberOfBlocks") - 1;
                         if (height > submitHeight) {
                             submitHeight = height;
-                            response = Request.getUnconfirmedTransactions(Main.childChain.getId(), Main.accountId);
+                            response = Nxt.getUnconfirmedTransactions(Main.accountId, Main.childChain);
                             if (response.getObjectList("unconfirmedTransactions").isEmpty()) {
                                 Solution solution = pending.get(0);
-                                response = Request.currencyMint(Main.currencyId, Main.childChain.getId(),
+                                response = Nxt.currencyMint(Main.currencyId, Main.childChain,
                                         solution.getNonce(), Main.mintingUnits, solution.getCounter(),
                                         Main.fee, Main.publicKey);
                                 byte[] txBytes = response.getHexString("unsignedTransactionBytes");
                                 Transaction tx = new Transaction(txBytes);
-                                CurrencyMintingAttachment attachment = new CurrencyMintingAttachment(txBytes);
-                                if (!tx.getTransactionType().equals("CurrencyMinting") ||
-                                        tx.getSenderId() != Main.accountId ||
-                                        tx.getAmount() != 0 ||
-                                        tx.getFee() != Main.fee ||
-                                        attachment.getCurrencyId() != Main.currencyId) {
-                                    log.error("CurrencyMinting transaction returned by the server is incorrect");
+                                Attachment.CurrencyMintingAttachment attachment =
+                                        (Attachment.CurrencyMintingAttachment)tx.getAttachment();
+                                if (tx.getSenderId() != Main.accountId || tx.getAmount() != 0 ||
+                                        tx.getFee() != Main.fee || attachment.getCurrencyId() != Main.currencyId) {
+                                    log.error("CurrencyMinting transaction returned by the server is incorrect\n "
+                                        + Utils.toHexString(txBytes));
+
                                 }
-                                byte[] signature = Crypto.sign(txBytes, Main.secretPhrase);
-                                System.arraycopy(signature, 0, txBytes, Transaction.SIGNATURE_OFFSET, 64);
-                                response = Request.broadcastTransaction(txBytes);
+                                response = Nxt.broadcastTransaction(txBytes, Main.secretPhrase);
                                 solution.setTxId(Utils.fullHashToId(response.getHexString("fullHash")));
                                 if (Main.mainWindow != null)
                                     Main.mainWindow.solutionFound(solution);
@@ -179,6 +184,10 @@ public class Mint {
                         pending.remove(0);
                     } catch (IOException exc) {
                         log.error("Unable to submit 'currencyMint' transaction - retrying", exc);
+                    } catch (Exception exc) {
+                        log.error("Exceptiong while submitting 'currencyMint' transaction - discarding", exc);
+                        submitted = true;
+                        pending.remove(0);
                     }
                     if (!submitted)
                         Thread.sleep(30000);

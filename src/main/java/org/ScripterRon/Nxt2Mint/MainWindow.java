@@ -15,6 +15,8 @@
  */
 package org.ScripterRon.Nxt2Mint;
 
+import org.ScripterRon.Nxt2API.Utils;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;

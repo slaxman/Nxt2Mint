@@ -15,6 +15,13 @@
  */
 package org.ScripterRon.Nxt2Mint;
 
+import org.ScripterRon.Nxt2API.Chain;
+import org.ScripterRon.Nxt2API.Crypto;
+import org.ScripterRon.Nxt2API.Nxt;
+import org.ScripterRon.Nxt2API.NxtException;
+import org.ScripterRon.Nxt2API.Response;
+import org.ScripterRon.Nxt2API.Utils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,11 +41,8 @@ import java.io.RandomAccessFile;
 import java.math.BigDecimal;
 import java.nio.channels.FileLock;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.logging.LogManager;
 
 import javax.swing.JFrame;
@@ -102,15 +106,6 @@ public class Main {
     /** Deferred exception */
     private static Throwable deferredException;
 
-    /** Nxt epoch (milliseconds since January 1, 1970) */
-    public static long epochBeginning;
-
-    /** Nxt chains */
-    public static final Map<Integer, Chain> chains = new HashMap<>();
-
-    /** Nxt transaction types */
-    public static final Map<Integer, Map<Integer, String>> transactionTypes = new HashMap<>();
-
     /** Nxt node host name */
     public static String nxtHost = "localhost";
 
@@ -119,12 +114,6 @@ public class Main {
 
     /** Use HTTPS connections */
     public static boolean useSSL = false;
-
-    /** Allow host name mismatch */
-    public static boolean allowNameMismatch = false;
-
-    /** Accept any server certificate */
-    public static boolean acceptAnyCertificate = false;
 
     /** Secret phrase */
     public static String secretPhrase;
@@ -296,46 +285,16 @@ public class Main {
     private static void startup() {
         try {
             //
-            // Get the Nxt configuration
+            // Initialize the Nxt API library
             //
-            Response response = Request.getConstants();
-            epochBeginning = response.getLong("epochBeginning");
-            //
-            // Get the chains
-            //
-            response.getObject("chainProperties").values().forEach(entry -> {
-                Response chainProperties = new Response((Map<String, Object>)entry);
-                Chain chain = new Chain(chainProperties.getString("name"),
-                                        chainProperties.getInt("id"),
-                                        chainProperties.getInt("decimals"));
-                chains.put(chain.getId(), chain);
-                if (chain.getName().equals(chainName))
-                    childChain = chain;
-            });
+            Nxt.init(nxtHost, apiPort, useSSL);
+            childChain = Nxt.getChain(chainName);
             if (childChain == null)
-                throw new IllegalArgumentException("'" + chainName + "' is not a valid chain");
-            if (childChain.getDecimals() != 8)
-                fee = new BigDecimal(fee).movePointLeft(8 - childChain.getDecimals()).longValue();
-            //
-            // Get the transaction types
-            //
-            Set<Map.Entry<String, Object>> typeSet = response.getObject("transactionTypes").entrySet();
-            typeSet.forEach(entry -> {
-                int type = Integer.valueOf(entry.getKey());
-                Map<String, Object> subtypes = (Map<String, Object>)((Map<String, Object>)entry.getValue()).get("subtypes");
-                Set<Map.Entry<String, Object>> subtypeSet = subtypes.entrySet();
-                Map<Integer, String> transactionSubtypes = new HashMap<>();
-                subtypeSet.forEach(subentry -> {
-                    int subtype = Integer.valueOf(subentry.getKey());
-                    String name = (String)((Map<String, Object>)subentry.getValue()).get("name");
-                    transactionSubtypes.put(subtype, name);
-                });
-                transactionTypes.put(type, transactionSubtypes);
-            });
+                throw new IllegalArgumentException(String.format("Chain '%s' is not defined", chainName));
             //
             // Ensure the account is funded
             //
-            response = Request.getBalance(accountId, childChain.getId());
+            Response response = Nxt.getBalance(accountId, childChain);
             long balance = response.getLong("balanceNQT");
             if (balance < fee)
                 throw new IllegalArgumentException(
@@ -344,7 +303,7 @@ public class Main {
             //
             // Get the currency definition
             //
-            response = Request.getCurrency(currencyCode, childChain.getId());
+            response = Nxt.getCurrency(currencyCode, childChain);
             currencyId = response.getId("currency");
             currencyDecimals = response.getInt("decimals");
             long maxSupply = response.getLong("maxSupply");
@@ -364,7 +323,7 @@ public class Main {
             // Get the current minting target
             //
             mintingUnits = BigDecimal.valueOf(currencyUnits).movePointRight(currencyDecimals).longValue();
-            response = Request.getMintingTarget(currencyId, accountId, mintingUnits);
+            response = Nxt.getMintingTarget(currencyId, accountId, mintingUnits);
             mintingTarget = new MintingTarget(response);
             if (mintingUnits > maxSupply - reserveSupply)
                 throw new IllegalArgumentException(
@@ -523,12 +482,6 @@ public class Main {
                         case "usessl":
                             useSSL = Boolean.valueOf(value);
                             break;
-                        case "allownamemismatch":
-                            allowNameMismatch = Boolean.valueOf(value);
-                            break;
-                        case "acceptanycertificate":
-                            acceptAnyCertificate = Boolean.valueOf(value);
-                            break;
                         case "secretphrase":
                             secretPhrase = value;
                             break;
@@ -646,22 +599,28 @@ public class Main {
             //
             string.append("<html><b>");
             string.append(text);
-            string.append("</b><br><br>");
+            string.append("</b><br>");
             //
             // Display the exception object
             //
-            string.append(exc.toString());
-            string.append("<br>");
+            string.append("<b>");
+            if (exc instanceof NxtException)
+                string.append(exc.getMessage());
+            else
+                string.append(exc.toString());
+            string.append("</b><br><br>");
             //
             // Display the stack trace
             //
-            StackTraceElement[] trace = exc.getStackTrace();
-            int count = 0;
-            for (StackTraceElement elem : trace) {
-                string.append("<br>");
-                string.append(elem.toString());
-                if (++count == 25)
-                    break;
+            if (!(exc instanceof NxtException)) {
+                StackTraceElement[] trace = exc.getStackTrace();
+                int count = 0;
+                for (StackTraceElement elem : trace) {
+                    string.append("<br>");
+                    string.append(elem.toString());
+                    if (++count == 25)
+                        break;
+                }
             }
             string.append("</html>");
             JOptionPane.showMessageDialog(mainWindow, string, "Error", JOptionPane.ERROR_MESSAGE);
@@ -678,52 +637,5 @@ public class Main {
                 log.error("Unable to log exception during program initialization");
             }
         }
-    }
-
-    /**
-     * Dumps a byte array to the log
-     *
-     * @param       text        Text message
-     * @param       data        Byte array
-     */
-    public static void dumpData(String text, byte[] data) {
-        dumpData(text, data, 0, data.length);
-    }
-
-    /**
-     * Dumps a byte array to the log
-     *
-     * @param       text        Text message
-     * @param       data        Byte array
-     * @param       length      Length to dump
-     */
-    public static void dumpData(String text, byte[] data, int length) {
-        dumpData(text, data, 0, length);
-    }
-
-    /**
-     * Dump a byte array to the log
-     *
-     * @param       text        Text message
-     * @param       data        Byte array
-     * @param       offset      Offset into array
-     * @param       length      Data length
-     */
-    public static void dumpData(String text, byte[] data, int offset, int length) {
-        StringBuilder outString = new StringBuilder(512);
-        outString.append(text);
-        outString.append("\n");
-        for (int i=0; i<length; i++) {
-            if (i%32 == 0)
-                outString.append(String.format(" %14X  ", i));
-            else if (i%4 == 0)
-                outString.append(" ");
-            outString.append(String.format("%02X", data[offset+i]));
-            if (i%32 == 31)
-                outString.append("\n");
-        }
-        if (length%32 != 0)
-            outString.append("\n");
-        log.debug(outString.toString());
     }
 }

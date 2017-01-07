@@ -15,6 +15,9 @@
  */
 package org.ScripterRon.Nxt2Mint;
 
+import org.ScripterRon.Nxt2API.IdentifierException;
+import org.ScripterRon.Nxt2API.Response;
+
 import java.math.BigInteger;
 
 /**
