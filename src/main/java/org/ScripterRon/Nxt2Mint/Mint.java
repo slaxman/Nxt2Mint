@@ -76,8 +76,7 @@ public class Mint {
         //
         counter = Main.mintingTarget.getCounter();
         try {
-            response = Nxt.getUnconfirmedTransactions(Main.accountId, Main.childChain);
-            if (!response.getObjectList("unconfirmedTransactions").isEmpty())
+            if (!Nxt.getUnconfirmedTransactions(Main.accountId, Main.childChain).isEmpty())
                 counter++;
         } catch (IOException exc) {
             log.error("Unable to get unconfirmed transactions", exc);
@@ -153,8 +152,7 @@ public class Mint {
                         int height = response.getInt("numberOfBlocks") - 1;
                         if (height > submitHeight) {
                             submitHeight = height;
-                            response = Nxt.getUnconfirmedTransactions(Main.accountId, Main.childChain);
-                            if (response.getObjectList("unconfirmedTransactions").isEmpty()) {
+                            if (Nxt.getUnconfirmedTransactions(Main.accountId, Main.childChain).isEmpty()) {
                                 Solution solution = pending.get(0);
                                 response = Nxt.currencyMint(Main.currencyId, Main.childChain,
                                         solution.getNonce(), Main.mintingUnits, solution.getCounter(),
