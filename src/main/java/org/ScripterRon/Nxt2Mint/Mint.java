@@ -16,7 +16,7 @@
 package org.ScripterRon.Nxt2Mint;
 import static org.ScripterRon.Nxt2Mint.Main.log;
 
-import org.ScripterRon.Nxt2API.Attachment;
+import org.ScripterRon.Nxt2API.CurrencyAttachment;
 import org.ScripterRon.Nxt2API.Nxt;
 import org.ScripterRon.Nxt2API.NxtException;
 import org.ScripterRon.Nxt2API.Response;
@@ -159,8 +159,8 @@ public class Mint {
                                         Main.fee, Main.publicKey);
                                 byte[] txBytes = response.getHexString("unsignedTransactionBytes");
                                 Transaction tx = new Transaction(txBytes);
-                                Attachment.CurrencyMintingAttachment attachment =
-                                        (Attachment.CurrencyMintingAttachment)tx.getAttachment();
+                                CurrencyAttachment.CurrencyMintingAttachment attachment =
+                                        (CurrencyAttachment.CurrencyMintingAttachment)tx.getAttachment();
                                 if (tx.getSenderId() != Main.accountId || tx.getAmount() != 0 ||
                                         tx.getFee() != Main.fee || attachment.getCurrencyId() != Main.currencyId) {
                                     log.error("CurrencyMinting transaction returned by the server is incorrect\n "
