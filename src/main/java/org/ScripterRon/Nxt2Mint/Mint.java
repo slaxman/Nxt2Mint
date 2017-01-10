@@ -159,8 +159,8 @@ public class Mint {
                                         Main.fee, Main.publicKey);
                                 byte[] txBytes = response.getHexString("unsignedTransactionBytes");
                                 Transaction tx = new Transaction(txBytes);
-                                CurrencyAttachment.CurrencyMintingAttachment attachment =
-                                        (CurrencyAttachment.CurrencyMintingAttachment)tx.getAttachment();
+                                CurrencyAttachment.MintingAttachment attachment =
+                                        (CurrencyAttachment.MintingAttachment)tx.getAttachment();
                                 if (tx.getSenderId() != Main.accountId || tx.getAmount() != 0 ||
                                         tx.getFee() != Main.fee || attachment.getCurrencyId() != Main.currencyId) {
                                     log.error("CurrencyMinting transaction returned by the server is incorrect\n "
