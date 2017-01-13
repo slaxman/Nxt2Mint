@@ -206,7 +206,7 @@ public class Mint {
             //
             // Stop the mint thread
             //
-            if (Thread.currentThread() != mintThread) {
+            if (Thread.currentThread() != mintThread && mintThread != null) {
                 mintThread.interrupt();
                 mintThread.join(60000);
             }

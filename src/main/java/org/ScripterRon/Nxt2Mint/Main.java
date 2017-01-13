@@ -294,6 +294,9 @@ public class Main {
             //
             // Ensure the account is funded
             //
+            if (childChain.getDecimals() != 8) {
+                fee = BigDecimal.valueOf(fee, 8).movePointRight(childChain.getDecimals()).longValue();
+            }
             Response response = Nxt.getBalance(accountId, childChain);
             long balance = response.getLong("balanceNQT");
             if (balance < fee)
