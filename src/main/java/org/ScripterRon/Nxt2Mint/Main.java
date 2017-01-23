@@ -15,6 +15,7 @@
  */
 package org.ScripterRon.Nxt2Mint;
 
+import org.ScripterRon.Nxt2API.Balance;
 import org.ScripterRon.Nxt2API.Chain;
 import org.ScripterRon.Nxt2API.Crypto;
 import org.ScripterRon.Nxt2API.Nxt;
@@ -297,8 +298,7 @@ public class Main {
             if (childChain.getDecimals() != 8) {
                 fee = BigDecimal.valueOf(fee, 8).movePointRight(childChain.getDecimals()).longValue();
             }
-            Response response = Nxt.getBalance(accountId, childChain);
-            long balance = response.getLong("balanceNQT");
+            long balance = Nxt.getBalance(accountId, childChain).getBalance();
             if (balance < fee)
                 throw new IllegalArgumentException(
                         String.format("Account %s confirmed balance is less than the transaction fee",
@@ -306,11 +306,11 @@ public class Main {
             //
             // Get the currency definition
             //
-            response = Nxt.getCurrency(currencyCode, childChain);
+            Response response = Nxt.getCurrency(currencyCode, childChain);
             currencyId = response.getId("currency");
             currencyDecimals = response.getInt("decimals");
-            long maxSupply = response.getLong("maxSupply");
-            long reserveSupply = response.getLong("reserveSupply");
+            long maxSupply = response.getLong("maxSupplyQNT");
+            long reserveSupply = response.getLong("reserveSupplyQNT");
             List<String> types = response.getStringList("types");
             if (!types.contains("MINTABLE"))
                 throw new IllegalArgumentException(
